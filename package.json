@@ -11,6 +11,7 @@
     "type-gen": "pnpm dlx supabase gen types typescript --project-id \"sajnsmhqdudlqhxhjste\" --schema public > src/database.types.ts"
   },
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.4",
     "@supabase/supabase-js": "^2.90.1",
