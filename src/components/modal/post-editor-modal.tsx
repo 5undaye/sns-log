@@ -49,8 +49,13 @@ export default function PostEditorModal() {
         title: "게시글 작성이 마무리 되지 않았습니다.",
         description: "이 화면에서 나가면 작성중인 내용이 사라집니다.",
         onPositive: () => {
+          images.forEach((image) => {
+            URL.revokeObjectURL(image.previewUrl);
+          });
+
           setContent("");
           setImages([]);
+
           close();
         },
       });
@@ -86,6 +91,8 @@ export default function PostEditorModal() {
   };
 
   const handleDeleteImage = (image: Image) => {
+    URL.revokeObjectURL(image.previewUrl);
+
     setImages((prevImages) =>
       prevImages.filter(
         (prevImage) => prevImage.previewUrl !== image.previewUrl,
