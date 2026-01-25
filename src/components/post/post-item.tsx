@@ -1,6 +1,6 @@
-import type { Post } from "@/types";
-
 import { HeartIcon, MessageCircle } from "lucide-react";
+
+import Loader from "@/components/loader";
 
 import EditPostButton from "@/components/post/edit-post-button";
 import DeletePostButton from "@/components/post/delete-post-button";
@@ -15,10 +15,22 @@ import { formatTimeAgo } from "@/lib/time";
 
 import defaultAvatar from "@/assets/default-avatar.jpg";
 import { useSession } from "@/store/session";
+import { usePostByIdData } from "@/hooks/queries/use-post-by-id-data";
+import Fallback from "@/components/fallback";
 
-export default function PostItem(post: Post) {
+export default function PostItem({ postId }: { postId: number }) {
   const session = useSession();
   const userId = session?.user.id;
+
+  const {
+    data: post,
+    error,
+    isPending,
+  } = usePostByIdData({ postId, type: "FEED" });
+
+  if (isPending) return <Loader />;
+  if (error) return <Fallback />;
+
   const isMine = userId === post.author_id;
 
   return (
