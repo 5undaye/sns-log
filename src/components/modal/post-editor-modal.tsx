@@ -1,20 +1,29 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 
 import { ImageIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-
-import { useCreatePost } from "@/hooks/mutations/post/use-create-post";
-import { generateErrorMessage } from "@/lib/error";
-import { usePostEditorModal } from "@/store/post-editor-modal";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+
+import { useCreatePost } from "@/hooks/mutations/post/use-create-post";
+import { useUpdatePost } from "@/hooks/mutations/post/use-update-post";
+
+import { generateErrorMessage } from "@/lib/error";
+
 import { useSession } from "@/store/session";
+import { usePostEditorModal } from "@/store/post-editor-modal";
 import { useOpenAlertModal } from "@/store/alert-modal";
 
 type Image = {
@@ -23,10 +32,14 @@ type Image = {
 };
 
 export default function PostEditorModal() {
-  const { isOpen, close } = usePostEditorModal();
+  const session = useSession();
+  const postEditorModal = usePostEditorModal();
+
+  const openAlertModal = useOpenAlertModal();
+
   const { mutate: createPost, isPending: isCreatePostPending } = useCreatePost({
     onSuccess: () => {
-      close();
+      postEditorModal.actions.close();
     },
     onError: (error) => {
       const message = generateErrorMessage(error);
@@ -34,8 +47,15 @@ export default function PostEditorModal() {
     },
   });
 
-  const session = useSession();
-  const openAlertModal = useOpenAlertModal();
+  const { mutate: updatePost, isPending: isUpdatePostPending } = useUpdatePost({
+    onSuccess: () => {
+      postEditorModal.actions.close();
+    },
+    onError: (error) => {
+      const message = generateErrorMessage(error);
+      toast.error(message, { position: "top-center" });
+    },
+  });
 
   const [content, setContent] = useState("");
   const [images, setImages] = useState<Image[]>([]);
@@ -52,27 +72,36 @@ export default function PostEditorModal() {
           images.forEach((image) => {
             URL.revokeObjectURL(image.previewUrl);
           });
-
-          setContent("");
-          setImages([]);
-
-          close();
+          postEditorModal.actions.close();
         },
       });
 
       return;
     }
 
-    close();
+    postEditorModal.actions.close();
   };
 
-  const handleCreatePostClick = () => {
+  const handleSavePostClick = () => {
+    if (!postEditorModal.isOpen) return;
     if (content.trim() === "") return;
-    createPost({
-      content,
-      images: images.map((image) => image.file),
-      userId: session!.user.id,
-    });
+
+    if (postEditorModal.type === "CREATE") {
+      createPost({
+        content,
+        images: images.map((image) => image.file),
+        userId: session!.user.id,
+      });
+    }
+
+    if (postEditorModal.type === "EDIT") {
+      if (content === postEditorModal.content) return;
+
+      updatePost({
+        id: postEditorModal.postId,
+        content: content,
+      });
+    }
   };
 
   const handleSelectImages = (event: ChangeEvent<HTMLInputElement>) => {
@@ -100,6 +129,16 @@ export default function PostEditorModal() {
     );
   };
 
+  const updateContents = useEffectEvent(() => {
+    if (!postEditorModal.isOpen) return;
+
+    if (postEditorModal.type === "CREATE") {
+      setContent("");
+      setImages([]);
+    }
+    if (postEditorModal.type === "EDIT") setContent(postEditorModal.content);
+  });
+
   useEffect(() => {
     if (textAreaRef.current) {
       textAreaRef.current.style.height = "auto";
@@ -109,16 +148,18 @@ export default function PostEditorModal() {
   }, [content]);
 
   useEffect(() => {
-    if (!isOpen) return;
     textAreaRef.current?.focus();
-  }, [isOpen]);
+    updateContents();
+  }, [postEditorModal.isOpen]);
+
+  const isPending = isCreatePostPending || isUpdatePostPending;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleCloseModal}>
+    <Dialog open={postEditorModal.isOpen} onOpenChange={handleCloseModal}>
       <DialogContent className="max-h-[90vh]">
-        <DialogTitle></DialogTitle>
+        <DialogTitle>포스트 작성</DialogTitle>
         <textarea
-          disabled={isCreatePostPending}
+          disabled={isPending}
           ref={textAreaRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -133,6 +174,24 @@ export default function PostEditorModal() {
           multiple
           className="hidden"
         />
+
+        {postEditorModal.isOpen && postEditorModal.type === "EDIT" && (
+          <Carousel>
+            <CarouselContent>
+              {postEditorModal.imageUrls?.map((url) => (
+                <CarouselItem className="basis-2/5" key={url}>
+                  <div className="relative">
+                    <img
+                      src={url}
+                      className="h-full w-full rounded-sm object-cover"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+        )}
+
         {images.length > 0 && (
           <Carousel>
             <CarouselContent>
@@ -155,20 +214,22 @@ export default function PostEditorModal() {
             </CarouselContent>
           </Carousel>
         )}
+        {postEditorModal.isOpen && postEditorModal.type === "CREATE" && (
+          <Button
+            onClick={() => {
+              fileInputRef.current?.click();
+            }}
+            disabled={isPending}
+            variant={"outline"}
+            className="cursor-pointer"
+          >
+            <ImageIcon />
+            이미지 추가
+          </Button>
+        )}
         <Button
-          onClick={() => {
-            fileInputRef.current?.click();
-          }}
-          disabled={isCreatePostPending}
-          variant={"outline"}
-          className="cursor-pointer"
-        >
-          <ImageIcon />
-          이미지 추가
-        </Button>
-        <Button
-          disabled={isCreatePostPending}
-          onClick={handleCreatePostClick}
+          disabled={isPending}
+          onClick={handleSavePostClick}
           className="cursor-pointer"
         >
           저장

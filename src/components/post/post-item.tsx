@@ -1,14 +1,18 @@
 import type { Post } from "@/types";
 
-import defaultAvatar from "@/assets/default-avatar.jpg";
+import { HeartIcon, MessageCircle } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import EditPostItemButton from "@/components/post/edit-post-item-button";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
-import { HeartIcon, MessageCircle } from "lucide-react";
+
 import { formatTimeAgo } from "@/lib/time";
+
+import defaultAvatar from "@/assets/default-avatar.jpg";
 
 export default function PostItem(post: Post) {
   return (
@@ -34,9 +38,7 @@ export default function PostItem(post: Post) {
 
         {/* 1-2. 수정/삭제 버튼 */}
         <div className="text-muted-foreground flex text-sm">
-          <Button className="cursor-pointer" variant={"ghost"}>
-            수정
-          </Button>
+          <EditPostItemButton {...post} />
           <Button className="cursor-pointer" variant={"ghost"}>
             삭제
           </Button>
