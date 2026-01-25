@@ -8,15 +8,21 @@ import PostItem from "@/components/post/post-item";
 import { useInfinitePostsData } from "@/hooks/queries/use-infinite-posts-data";
 
 export default function PostFeed() {
-  const { data, error, isPending, fetchNextPage, isFetchingNextPage } =
-    useInfinitePostsData();
+  const {
+    data,
+    error,
+    isPending,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
+  } = useInfinitePostsData();
   const { ref, inView } = useInView();
 
   useEffect(() => {
-    if (inView) {
+    if (inView && !isFetchingNextPage && hasNextPage) {
       fetchNextPage();
     }
-  }, [inView]);
+  }, [inView, isFetchingNextPage, hasNextPage]);
 
   if (error) return <Fallback />;
   if (isPending) return <Loader />;

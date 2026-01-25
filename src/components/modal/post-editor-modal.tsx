@@ -192,7 +192,7 @@ export default function PostEditorModal() {
           </Carousel>
         )}
 
-        {images.length > 0 && (
+        {postEditorModal.isOpen && postEditorModal.type === "CREATE" && (
           <Carousel>
             <CarouselContent>
               {images.map((image) => (
