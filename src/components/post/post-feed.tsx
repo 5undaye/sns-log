@@ -7,7 +7,7 @@ import PostItem from "@/components/post/post-item";
 
 import { useInfinitePostsData } from "@/hooks/queries/use-infinite-posts-data";
 
-export default function PostFeed() {
+export default function PostFeed({ authorId }: { authorId?: string }) {
   const {
     data,
     error,
@@ -15,7 +15,7 @@ export default function PostFeed() {
     fetchNextPage,
     isFetchingNextPage,
     hasNextPage,
-  } = useInfinitePostsData();
+  } = useInfinitePostsData(authorId);
   const { ref, inView } = useInView();
 
   useEffect(() => {
