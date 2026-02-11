@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useUpdatePassword } from "@/hooks/mutations/auths/use-update-password";
+import { useUpdatePassword } from "@/hooks/mutations/auth/use-update-password";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { generateErrorMessage } from "@/lib/error";
