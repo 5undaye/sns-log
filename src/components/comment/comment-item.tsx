@@ -10,7 +10,11 @@ import { toast } from "sonner";
 import { generateErrorMessage } from "@/lib/error";
 import { useOpenAlertModal } from "@/store/alert-modal";
 
-export default function CommentItem(props: NestedComment) {
+type CommentItemProps = NestedComment & {
+  isLast?: boolean;
+};
+
+export default function CommentItem(props: CommentItemProps) {
   const session = useSession();
   const openAlertModal = useOpenAlertModal();
 
@@ -44,10 +48,11 @@ export default function CommentItem(props: NestedComment) {
 
   const isMine = session?.user.id === props.author_id;
   const isRootComment = props.parentComment === undefined;
+  const isOverTwoLevels = props.parent_comment_id !== props.root_comment_id;
 
   return (
     <div
-      className={`flex flex-col gap-8 pb-5 ${isRootComment ? "border-b" : "ml-6"}`}
+      className={`flex flex-col gap-8 ${isRootComment ? "border-b" : "ml-6"} ${props.isLast ? "pb-8" : ""}`}
     >
       <div className="flex items-start gap-4">
         <Link to={"#"}>
@@ -68,7 +73,14 @@ export default function CommentItem(props: NestedComment) {
               onClose={toggleIsEditing}
             />
           ) : (
-            <div>{props.content}</div>
+            <div>
+              {isOverTwoLevels && (
+                <span className="font-bold text-blue-500">
+                  @{props.parentComment?.author.nickname}&nbsp;
+                </span>
+              )}
+              {props.content}
+            </div>
           )}
           <div className="text-muted-foreground flex justify-between text-sm">
             <div className="flex items-center gap-2">
@@ -109,6 +121,7 @@ export default function CommentItem(props: NestedComment) {
           type={"REPLY"}
           postId={props.post_id}
           parentCommentId={props.id}
+          rootCommentId={props.root_comment_id || props.id}
           onClose={toggleIsReply}
         />
       )}
